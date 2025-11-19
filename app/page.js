@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { searchPrompts, getCategories, getTags } from '@/lib/queries'
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
   const [tags, setTags] = useState([])
   const [selectedTags, setSelectedTags] = useState([])
   const [loading, setLoading] = useState(true)
+  const [copiedId, setCopiedId] = useState(null)
 
   // Load initial data
   useEffect(() => {
@@ -48,6 +50,17 @@ export default function Home() {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     )
+  }
+
+  // Copy to clipboard
+  const copyToClipboard = async (content, id) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
   }
 
   return (
@@ -114,12 +127,25 @@ export default function Home() {
           <div className="prompts-grid">
             {prompts.map(prompt => (
               <div key={prompt.id} className="prompt-card">
-                <h3>{prompt.title}</h3>
-                <p className="content">{prompt.content}</p>
+                <Link href={`/prompt/${prompt.id}`} className="card-link">
+                  <h3>{prompt.title}</h3>
+                  <p className="content">{prompt.content}</p>
+                </Link>
+                
+                <div className="card-actions">
+                  <button 
+                    onClick={() => copyToClipboard(prompt.content, prompt.id)}
+                    className={`copy-btn ${copiedId === prompt.id ? 'copied' : ''}`}
+                    title="Copy to clipboard"
+                  >
+                    {copiedId === prompt.id ? '✓' : '📋'}
+                  </button>
+                </div>
+
                 <div className="meta">
                   <span className="category">{prompt.category}</span>
                   <div className="tags">
-                    {prompt.tags?.map(tag => (
+                    {prompt.tags?.slice(0, 3).map(tag => (
                       <span key={tag} className="tag">{tag}</span>
                     ))}
                   </div>
