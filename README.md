@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PromptVault - Supabase Migration Guide
 
 A Next.js 14 prompt organizer application migrated from local PostgreSQL to Supabase, with bulk import capabilities for 50,000+ prompts from Notion.
@@ -201,3 +202,6 @@ MIT License - feel free to use this for your own projects!
 ## 🤝 Contributing
 
 Contributions welcome! Please open an issue or submit a pull request.
+=======
+# prompt-vault-production
+>>>>>>> 0b983d65462fd72d5cff605f52a087f77590def2
