@@ -1,25 +1,57 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/db'
 
-export default function PromptDetailPage({ params }) {
+export default function PromptDetailPage() {
   const [prompt, setPrompt] = useState(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const router = useRouter()
+  const params = useParams()
 
   useEffect(() => {
     async function fetchPrompt() {
-      const { data, error } = await supabase
+      if (!params?.id) {
+        console.error('No ID provided')
+        setLoading(false)
+        return
+      }
+
+      // Try both lowercase 'id' and uppercase 'ID' for compatibility
+      let data, error
+      
+      // First try lowercase
+      const result = await supabase
         .from('prompts')
         .select('*')
         .eq('id', params.id)
-        .single()
+        .maybeSingle()
+
+      if (result.error && result.error.code !== 'PGRST116') {
+        // If error is NOT "no rows returned", try uppercase ID
+        const upperResult = await supabase
+          .from('prompts')
+          .select('*')
+          .eq('ID', params.id)
+          .maybeSingle()
+        
+        data = upperResult.data
+        error = upperResult.error
+      } else {
+        data = result.data
+        error = result.error
+      }
 
       if (error) {
         console.error('Error fetching prompt:', error)
+        setLoading(false)
+        return
+      }
+
+      if (!data) {
+        console.error('No prompt found with ID:', params.id)
         setLoading(false)
         return
       }
@@ -29,7 +61,7 @@ export default function PromptDetailPage({ params }) {
     }
 
     fetchPrompt()
-  }, [params.id])
+  }, [params?.id])
 
   const copyToClipboard = async () => {
     try {

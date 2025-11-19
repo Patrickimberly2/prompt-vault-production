@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { searchPrompts, getCategories, getTags } from '@/lib/queries'
-import AddPromptModal from '@/components/AddPromptModal'
 
 export default function Home() {
   const [prompts, setPrompts] = useState([])
@@ -14,25 +13,23 @@ export default function Home() {
   const [selectedTags, setSelectedTags] = useState([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Load initial data
   useEffect(() => {
-    loadData()
+    async function loadInitialData() {
+      setLoading(true)
+      const [promptsData, categoriesData, tagsData] = await Promise.all([
+        searchPrompts(),
+        getCategories(),
+        getTags()
+      ])
+      setPrompts(promptsData)
+      setCategories(categoriesData)
+      setTags(tagsData)
+      setLoading(false)
+    }
+    loadInitialData()
   }, [])
-
-  async function loadData() {
-    setLoading(true)
-    const [promptsData, categoriesData, tagsData] = await Promise.all([
-      searchPrompts(),
-      getCategories(),
-      getTags()
-    ])
-    setPrompts(promptsData)
-    setCategories(categoriesData)
-    setTags(tagsData)
-    setLoading(false)
-  }
 
   // Handle search
   const handleSearch = async () => {
@@ -83,9 +80,6 @@ export default function Home() {
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
           <button onClick={handleSearch}>Search</button>
-          <button onClick={() => setIsModalOpen(true)} className="button-add">
-            + New Prompt
-          </button>
         </div>
 
         <div className="filters">
@@ -151,8 +145,8 @@ export default function Home() {
                 <div className="meta">
                   <span className="category">{prompt.category}</span>
                   <div className="tags">
-                    {prompt.tags?.slice(0, 3).map((tag, index) => (
-                      <span key={`${prompt.id}-${tag}-${index}`} className="tag">{tag}</span>
+                    {prompt.tags?.slice(0, 3).map(tag => (
+                      <span key={tag} className="tag">{tag}</span>
                     ))}
                   </div>
                 </div>
@@ -164,12 +158,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      <AddPromptModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={loadData}
-      />
     </div>
   )
 }
