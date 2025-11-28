@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "./migrate_notion_to_",
+        "./migrate_notion_to_",
+        "./migrate_notion_to_",
+        "./migrate_notion_to_"
+    ]
+}
