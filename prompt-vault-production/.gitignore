@@ -48,6 +48,3 @@ ENV/
 !scripts/sample_prompts.csv
 *.log
 notion_export/
-
-Zipped folders/
-*.zip
