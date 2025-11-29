@@ -1,13 +1,12 @@
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   create_cleanup_pr:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,21 +26,108 @@ jobs:
       - name: Write README.md
         run: |
           cat > README.md <<'EOF'
-# PromptVault - Supabase Migration Guide
+          # PromptVault - Supabase Migration Guide
 
-A Next.js 14 prompt organizer application migrated from local PostgreSQL to Supabase, with bulk import capabilities for 50,000+ prompts from Notion.
+          A Next.js 14 prompt organizer application migrated from local PostgreSQL to Supabase, with bulk import capabilities for 50,000+ prompts from Notion.
 
-## 🚀 Quick Start
+          ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 18+
-- Python 3.8+ (for data import script)
-- Supabase account
-- Vercel account (for deployment)
+          ### Prerequisites
+          - Node.js 18+
+          - Python 3.8+ (for data import script)
+          - Supabase account
+          - Vercel account (for deployment)
 
-### Installation
+          ... (full README content — paste the full content you accepted) ...
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/prompt-vault-production.git
-   cd prompt-vault-production
+          EOF
+
+      - name: Commit README
+        run: |
+          git add README.md
+          git commit -m "Resolve README merge conflict" || echo "No changes to commit"
+
+      - name: Write LICENSE
+        run: |
+          cat > LICENSE <<'EOF'
+          MIT License
+
+          Copyright (c) 2025 Patrickimberly2
+
+          Permission is hereby granted, free of charge, to any person obtaining a copy
+          of this software and associated documentation files (the "Software"), to deal
+          in the Software without restriction, including without limitation the rights
+          to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+          copies of the Software, and to permit persons to whom the Software is
+          furnished to do so, subject to the following conditions:
+
+          The above copyright notice and this permission notice shall be included in all
+          copies or substantial portions of the Software.
+
+          THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+          IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+          FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+          AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+          LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+          OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+          SOFTWARE.
+          EOF
+
+      - name: Commit LICENSE
+        run: |
+          git add LICENSE
+          git commit -m "Add MIT LICENSE" || echo "No changes to commit"
+
+      - name: Write .gitignore
+        run: |
+          cat > .gitignore <<'EOF'
+          # Node
+          node_modules/
+          npm-debug.log*
+          yarn-debug.log*
+          yarn-error.log*
+          package-lock.json
+
+          # Env
+          .env
+          .env.local
+          .env.*.local
+          .env.production
+          .env.test
+
+          # Python
+          venv/
+          .venv/
+          env/
+          __pycache__/
+          *.py[cod]
+          *.egg-info/
+
+          # Editor / OS
+          .vscode/
+          .idea/
+          .DS_Store
+          EOF
+
+      - name: Commit .gitignore
+        run: |
+          git add .gitignore
+          git commit -m "Update .gitignore" || echo "No changes to commit"
+
+      - name: Push branch
+        run: |
+          git push -u origin cleanup/readme-license-gitignore
+
+      - name: Create PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Resolve README merge conflict, add MIT license, and update .gitignore",
+              head: "cleanup/readme-license-gitignore",
+              base: "main",
+              body: "Resolve README merge conflict; add LICENSE; update .gitignore"
+            });
+            core.setOutput("url", pr.data.html_url)
