@@ -1,6 +1,3 @@
-# Manual workflow: creates branch cleanup/readme-license-gitignore,
-# replaces README.md, adds LICENSE, updates .gitignore,
-# commits each change with the exact messages, pushes, and opens a PR.
 on:
   workflow_dispatch:
 
