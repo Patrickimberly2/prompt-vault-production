@@ -1,0 +1,50 @@
+# Manual workflow: creates branch cleanup/readme-license-gitignore,
+# replaces README.md, adds LICENSE, updates .gitignore,
+# commits each change with the exact messages, pushes, and opens a PR.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create_cleanup_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create branch
+        run: |
+          git fetch origin main
+          git checkout -b cleanup/readme-license-gitignore
+
+      - name: Write README.md
+        run: |
+          cat > README.md <<'EOF'
+# PromptVault - Supabase Migration Guide
+
+A Next.js 14 prompt organizer application migrated from local PostgreSQL to Supabase, with bulk import capabilities for 50,000+ prompts from Notion.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Python 3.8+ (for data import script)
+- Supabase account
+- Vercel account (for deployment)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/prompt-vault-production.git
+   cd prompt-vault-production
