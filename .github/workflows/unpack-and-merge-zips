@@ -49,8 +49,13 @@ jobs:
           else
             echo "PromptVault_Migration_Complete.zip not found; skipping"
           fi
-
-      - name: Stage and commit any changes
+      
+      - name: Set up Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+     - name: Stage and commit any changes
         run: |
           git add PromptVault_2.0_Scripts PromptVault_Migration_Complete || true
           git status --porcelain
