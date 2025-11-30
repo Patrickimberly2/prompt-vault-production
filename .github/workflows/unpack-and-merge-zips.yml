@@ -25,10 +25,12 @@ jobs:
           echo "BRANCH=merge/unpack-zips-$(date +%s)" >> $GITHUB_ENV
           echo "Created branch $BRANCH"
 
-      - name: Create and switch to branch
+      - name: Create and switch to branch (robust)
         run: |
+          set -e
           git fetch origin main
-          git checkout -b "$BRANCH"
+          # Use -B to (re)create or reset the branch locally
+          git checkout -B "$BRANCH"
 
       - name: Unpack PromptVault_2.0_Scripts.zip if present
         run: |
@@ -50,9 +52,22 @@ jobs:
             echo "PromptVault_Migration_Complete.zip not found; skipping"
           fi
 
+      - name: Debug: show git status before commit
+        run: |
+          git status --porcelain
+          git ls-files --others --exclude-standard || true
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --list
+
       - name: Stage and commit any changes
         run: |
+          set -e
           git add PromptVault_2.0_Scripts PromptVault_Migration_Complete || true
+          echo "Staged files:"
           git status --porcelain
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -62,7 +77,9 @@ jobs:
 
       - name: Push branch
         run: |
-          git push -u origin "$BRANCH"
+          set -e
+          # push and set upstream
+          git push --set-upstream origin "$BRANCH"
 
       - name: Create pull request
         uses: actions/github-script@v7
