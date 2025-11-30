@@ -1,0 +1,81 @@
+name: Unpack and merge zips
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  unpack_and_merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Create branch name
+        run: |
+          echo "BRANCH=merge/unpack-zips-$(date +%s)" >> $GITHUB_ENV
+          echo "Created branch $BRANCH"
+
+      - name: Create and switch to branch
+        run: |
+          git fetch origin main
+          git checkout -b "$BRANCH"
+
+      - name: Unpack PromptVault_2.0_Scripts.zip if present
+        run: |
+          if [ -f PromptVault_2.0_Scripts.zip ]; then
+            mkdir -p PromptVault_2.0_Scripts
+            unzip -o PromptVault_2.0_Scripts.zip -d PromptVault_2.0_Scripts
+            echo "Unzipped PromptVault_2.0_Scripts.zip"
+          else
+            echo "PromptVault_2.0_Scripts.zip not found; skipping"
+          fi
+
+      - name: Unpack PromptVault_Migration_Complete.zip if present
+        run: |
+          if [ -f PromptVault_Migration_Complete.zip ]; then
+            mkdir -p PromptVault_Migration_Complete
+            unzip -o PromptVault_Migration_Complete.zip -d PromptVault_Migration_Complete
+            echo "Unzipped PromptVault_Migration_Complete.zip"
+          else
+            echo "PromptVault_Migration_Complete.zip not found; skipping"
+          fi
+
+      - name: Stage and commit any changes
+        run: |
+          git add PromptVault_2.0_Scripts PromptVault_Migration_Complete || true
+          git status --porcelain
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Unpack zip archives into repository"
+
+      - name: Push branch
+        run: |
+          git push -u origin "$BRANCH"
+
+      - name: Create pull request
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = process.env.BRANCH;
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Unpack zip archives into repository",
+              head: branch,
+              base: "main",
+              body: "This PR unpacks PromptVault_2.0_Scripts.zip and PromptVault_Migration_Complete.zip into folders for review."
+            });
+            console.log("PR created: " + pr.data.html_url)
