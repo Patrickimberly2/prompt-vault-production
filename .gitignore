@@ -32,14 +32,25 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+pnpm-debug.log*
+lerna-debug.log*
 
-# Env
-.env
-.env.local
-.env.*.local
-.env.production
-.env.test
+# Local development
+.DS_Store
+*.pem
+Thumbs.db
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
 
 # Python
 __pycache__/
@@ -75,3 +86,37 @@ build/
 *.swp
 *~
 .DS_Store
+cleanup_log.txt
+file_structure.txt
+
+# Scripts folder internals (if it contains large datasets)
+# Uncomment if you don't want to commit large data files
+# /scripts/**/*.xlsx
+# /scripts/**/*.csv
+# /scripts/**/*.json
+# But keep the script files themselves
+# !/scripts/**/*.py
+# !/scripts/**/*.js
+# !/scripts/**/*.sql
+
+# Review folder (temporary organization)
+__review_needed__/
+
+# Old migration scripts folder (if you recreated it)
+PromptVault_2.0_Scripts/
+
+# Supabase CLI (if using local development)
+supabase/.branches/
+supabase/.temp/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Package manager lock files (choose one, keep the other)
+# If using npm, keep package-lock.json
+# package-lock.json
+# If using yarn, keep yarn.lock
+# yarn.lock
+# If using pnpm, keep pnpm-lock.yaml
+# pnpm-lock.yaml
