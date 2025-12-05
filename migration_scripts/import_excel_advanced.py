@@ -1,6 +1,10 @@
 """
-Advanced Excel Importer - Handles Multiple Sheets
-Processes all 78 sheets from ChatGPT Prompt Learning Library
+Advanced Excel Importer - Handles Multiple Files & Sheets
+Processes:
+1. ChatGPT Prompt Learning Library (78 sheets, ~15,000-20,000 prompts)
+2. Midjourney AI Art Prompts (51 sheets, ~10,000 prompts)
+
+Total Expected: ~25,000-30,000 prompts
 """
 
 import pandas as pd
@@ -20,10 +24,10 @@ headers = {
     "Prefer": "return=representation"
 }
 
-class AdvancedExcelImporter:
-    def __init__(self, file_path: str):
-        self.file_path = file_path
+class UniversalExcelImporter:
+    def __init__(self):
         self.stats = {
+            'files_processed': 0,
             'sheets_processed': 0,
             'prompts_extracted': 0,
             'prompts_inserted': 0,
@@ -34,7 +38,7 @@ class AdvancedExcelImporter:
         self.load_existing_prompts()
     
     def load_existing_prompts(self):
-        """Load existing prompts"""
+        """Load existing prompts to avoid duplicates"""
         print("📥 Loading existing prompts...")
         try:
             url = f"{SUPABASE_URL}/rest/v1/prompts?select=name,prompt_text"
@@ -48,18 +52,21 @@ class AdvancedExcelImporter:
                         self.existing_prompts.add(hash(p['prompt_text'][:500]))
                 print(f"   Found {len(self.existing_prompts)} existing prompts")
         except Exception as e:
-            print(f"   ⚠️  Warning: {e}")
+            print(f"   ⚠️ Warning: {e}")
     
     def is_duplicate(self, name: str, prompt_text: str) -> bool:
-        """Check for duplicates"""
+        """Check if prompt already exists"""
         if name[:200] in self.existing_prompts:
             return True
         if hash(prompt_text[:500]) in self.existing_prompts:
             return True
         return False
     
-    def detect_prompt_type(self, text: str) -> str:
-        """Detect prompt type"""
+    def detect_prompt_type(self, text: str, ai_model: str) -> str:
+        """Detect prompt type based on content and AI model"""
+        if ai_model == 'Midjourney':
+            return 'image-generation'
+        
         text_lower = text.lower()
         if '[' in text and ']' in text:
             return 'fill-in-blank'
@@ -70,8 +77,8 @@ class AdvancedExcelImporter:
         else:
             return 'template'
     
-    def map_category(self, sheet_name: str) -> str:
-        """Map sheet name to category"""
+    def map_category_chatgpt(self, sheet_name: str) -> str:
+        """Map ChatGPT sheet name to category"""
         sheet_lower = sheet_name.lower()
         
         # Social Media platforms
@@ -102,10 +109,6 @@ class AdvancedExcelImporter:
         if any(word in sheet_lower for word in ['career', 'resume', 'time management', 'stress', 'sleep', 'personal']):
             return 'Personal Development'
         
-        # Creative/Writing
-        if any(word in sheet_lower for word in ['copywriting', 'landing page', 'funnel']):
-            return 'Copywriting'
-        
         # Customer Service
         if 'customer service' in sheet_lower:
             return 'Customer Service'
@@ -116,10 +119,15 @@ class AdvancedExcelImporter:
         
         return 'General'
     
-    def extract_prompts_from_sheet(self, df: pd.DataFrame, sheet_name: str) -> List[Dict]:
-        """Extract prompts from a sheet"""
+    def map_category_midjourney(self, sheet_name: str) -> str:
+        """Map Midjourney sheet name to category"""
+        # All Midjourney prompts are image generation
+        return 'Image Generation'
+    
+    def extract_prompts_chatgpt(self, df: pd.DataFrame, sheet_name: str) -> List[Dict]:
+        """Extract ChatGPT prompts from a sheet"""
         prompts = []
-        category = self.map_category(sheet_name)
+        category = self.map_category_chatgpt(sheet_name)
         
         # Skip table of contents
         if 'table of contents' in sheet_name.lower():
@@ -140,7 +148,6 @@ class AdvancedExcelImporter:
                     continue
                 
                 # Create prompt
-                # Use first 50 chars as title if it's long
                 if len(text) > 100:
                     name = text[:50] + "..."
                     prompt_text = text
@@ -151,17 +158,69 @@ class AdvancedExcelImporter:
                 prompt = {
                     'name': name[:200],
                     'prompt_text': prompt_text[:10000],
-                    'prompt_type': self.detect_prompt_type(prompt_text),
+                    'prompt_type': self.detect_prompt_type(prompt_text, 'ChatGPT'),
                     'category': category,
                     'source': f'Excel: {sheet_name}',
                     'ai_model': 'ChatGPT',
-                    'use_case': category
+                    'use_case': category,
+                    'tags': [sheet_name, category]
                 }
                 
                 # Check duplicates
                 if not self.is_duplicate(prompt['name'], prompt['prompt_text']):
                     prompts.append(prompt)
-                    # Add to existing set
+                    self.existing_prompts.add(prompt['name'])
+                    self.existing_prompts.add(hash(prompt['prompt_text'][:500]))
+                else:
+                    self.stats['duplicates_skipped'] += 1
+        
+        return prompts
+    
+    def extract_prompts_midjourney(self, df: pd.DataFrame, sheet_name: str) -> List[Dict]:
+        """Extract Midjourney prompts from a sheet"""
+        prompts = []
+        category = self.map_category_midjourney(sheet_name)
+        
+        # Skip home/index sheets
+        if 'home' in sheet_name.lower():
+            return []
+        
+        # Midjourney format: first column usually has the prompt
+        for col in df.columns:
+            for idx, value in df[col].items():
+                if pd.isna(value):
+                    continue
+                
+                text = str(value).strip()
+                
+                # Skip empty, too short, or header-like text
+                if len(text) < 10:
+                    continue
+                if any(skip in text.lower() for skip in ['category:', 'midjourney', 'prompt collection', 'unnamed']):
+                    continue
+                
+                # Create prompt
+                if len(text) > 80:
+                    name = text[:50] + "..."
+                    prompt_text = text
+                else:
+                    name = text
+                    prompt_text = text
+                
+                prompt = {
+                    'name': name[:200],
+                    'prompt_text': prompt_text[:10000],
+                    'prompt_type': 'image-generation',
+                    'category': category,
+                    'source': f'Midjourney: {sheet_name}',
+                    'ai_model': 'Midjourney',
+                    'use_case': 'Image Generation',
+                    'tags': [sheet_name, 'Midjourney', 'Art']
+                }
+                
+                # Check duplicates
+                if not self.is_duplicate(prompt['name'], prompt['prompt_text']):
+                    prompts.append(prompt)
                     self.existing_prompts.add(prompt['name'])
                     self.existing_prompts.add(hash(prompt['prompt_text'][:500]))
                 else:
@@ -187,41 +246,49 @@ class AdvancedExcelImporter:
         
         return inserted
     
-    def process_all_sheets(self):
-        """Process all sheets in the Excel file"""
-        print(f"\n📂 Reading Excel file...")
+    def process_file(self, file_path: str, file_type: str):
+        """Process a single Excel file"""
+        print(f"\n{'='*70}")
+        print(f"📂 PROCESSING: {os.path.basename(file_path)}")
+        print(f"   Type: {file_type}")
+        print('='*70)
         
         try:
-            xl = pd.ExcelFile(self.file_path)
+            xl = pd.ExcelFile(file_path)
             sheet_names = xl.sheet_names
             
             print(f"   Found {len(sheet_names)} sheets")
             
-            # Skip table of contents
-            sheet_names = [s for s in sheet_names if 'table of contents' not in s.lower()]
+            # Skip certain sheets
+            if file_type == 'ChatGPT':
+                sheet_names = [s for s in sheet_names if 'table of contents' not in s.lower()]
+                extractor = self.extract_prompts_chatgpt
+            else:  # Midjourney
+                sheet_names = [s for s in sheet_names if 'home' not in s.lower()]
+                extractor = self.extract_prompts_midjourney
             
-            print(f"   Processing {len(sheet_names)} sheets (skipped ToC)")
+            print(f"   Processing {len(sheet_names)} sheets")
             print()
             
             batch = []
             batch_size = 100
             
             for i, sheet_name in enumerate(sheet_names, 1):
-                print(f"   📄 [{i}/{len(sheet_names)}] {sheet_name}...", end=' ')
+                print(f"   📄 [{i}/{len(sheet_names)}] {sheet_name[:50]}...", end=' ')
                 
                 try:
                     # Read sheet
-                    df = pd.read_excel(self.file_path, sheet_name=sheet_name)
+                    df = pd.read_excel(file_path, sheet_name=sheet_name)
                     
                     # Extract prompts
-                    prompts = self.extract_prompts_from_sheet(df, sheet_name)
+                    prompts = extractor(df, sheet_name)
                     
                     if prompts:
                         batch.extend(prompts)
                         self.stats['prompts_extracted'] += len(prompts)
                         print(f"✅ {len(prompts)} prompts")
                     else:
-                        print("⏭️  Empty")
+                        print("⭐ Empty")
                     
                     self.stats['sheets_processed'] += 1
                     
@@ -241,40 +308,61 @@ class AdvancedExcelImporter:
                 inserted = self.insert_batch(batch)
                 self.stats['prompts_inserted'] += inserted
             
-            # Final summary
-            print(f"\n{'='*70}")
-            print("📊 EXCEL IMPORT COMPLETE")
-            print('='*70)
-            print(f"Sheets Processed:     {self.stats['sheets_processed']}")
-            print(f"Prompts Extracted:    {self.stats['prompts_extracted']}")
-            print(f"Prompts Inserted:     {self.stats['prompts_inserted']}")
-            print(f"Duplicates Skipped:   {self.stats['duplicates_skipped']}")
-            print(f"Errors:               {self.stats['errors']}")
-            print('='*70)
+            self.stats['files_processed'] += 1
             
         except Exception as e:
             print(f"\n❌ Error reading Excel file: {e}")
+    
+    def process_all_files(self):
+        """Process all Excel files"""
+        files = [
+            ('ChatGPT_Prompt_Learning_Library.xlsx', 'ChatGPT'),
+            ('10000_Midjourney_AI_Art_Prompt_Collection.xlsx', 'Midjourney')
+        ]
+        
+        print("="*70)
+        print("🚀 UNIVERSAL EXCEL IMPORTER")
+        print("   ChatGPT Prompts + Midjourney Art Prompts")
+        print("="*70)
+        print("\nLooking for Excel files...")
+        
+        found_files = []
+        for file_path, file_type in files:
+            if os.path.exists(file_path):
+                print(f"   ✅ Found: {file_path}")
+                found_files.append((file_path, file_type))
+            else:
+                print(f"   ⚠️  Not found: {file_path}")
+        
+        if not found_files:
+            print("\n❌ No Excel files found!")
+            print("\nPlease make sure these files are in the current directory:")
+            print("   - ChatGPT_Prompt_Learning_Library.xlsx")
+            print("   - 10000_Midjourney_AI_Art_Prompt_Collection.xlsx")
+            return
+        
+        # Process each file
+        for file_path, file_type in found_files:
+            self.process_file(file_path, file_type)
+        
+        # Final summary
+        print(f"\n{'='*70}")
+        print("🎉 IMPORT COMPLETE")
+        print('='*70)
+        print(f"Files Processed:      {self.stats['files_processed']}/{len(files)}")
+        print(f"Sheets Processed:     {self.stats['sheets_processed']}")
+        print(f"Prompts Extracted:    {self.stats['prompts_extracted']}")
+        print(f"Prompts Inserted:     {self.stats['prompts_inserted']}")
+        print(f"Duplicates Skipped:   {self.stats['duplicates_skipped']}")
+        print(f"Errors:               {self.stats['errors']}")
+        print('='*70)
+        print(f"\n✨ Your database now has ~{self.stats['prompts_inserted']:,} prompts!")
 
 def main():
-    print("="*70)
-    print("📊 ADVANCED EXCEL IMPORTER - ALL SHEETS")
-    print("="*70)
+    importer = UniversalExcelImporter()
+    importer.process_all_files()
     
-    # Look for file
-    file_path = "ChatGPT_Prompt_Learning_Library.xlsx"
-    
-    if not os.path.exists(file_path):
-        print(f"\n❌ File not found: {file_path}")
-        print("\nPlease make sure the file is in the current directory.")
-        return
-    
-    print(f"\n✅ Found file: {file_path}")
-    
-    # Process
-    importer = AdvancedExcelImporter(file_path)
-    importer.process_all_sheets()
-    
-    print("\n✅ Done! Run view_stats.py to see results")
+    print("\n✅ Done! Run view_stats.py to see detailed results")
     print("➡️  Next: Run cleanup_and_organize.py for final polish")
 
 if __name__ == "__main__":
