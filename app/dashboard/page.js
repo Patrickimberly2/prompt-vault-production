@@ -47,17 +47,18 @@ export default function DashboardPage() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login?redirect=/dashboard');
-    }
-  }, [user, authLoading, router]);
+  // Redirect if not logged in - DISABLED for now until login page is created
+  // useEffect(() => {
+  //   if (!authLoading && !user) {
+  //     router.push('/login?redirect=/dashboard');
+  //   }
+  // }, [user, authLoading, router]);
 
   // Fetch dashboard data
   useEffect(() => {
     async function fetchDashboardData() {
-      if (!user) return;
+      // Allow viewing dashboard without login for demo purposes
+      // if (!user) return;
       
       setLoading(true);
       try {
@@ -83,7 +84,16 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, [user]);
 
-  if (authLoading || !user) {
+  // Show demo data if no user is logged in
+  const displayUser = user || {
+    email: 'demo@promptvault.com',
+    user_metadata: {
+      full_name: 'Demo User',
+      avatar_url: null,
+    }
+  };
+
+  if (authLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -126,16 +136,16 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Avatar
-                src={user.user_metadata?.avatar_url}
-                name={user.user_metadata?.full_name || user.email}
+                src={displayUser.user_metadata?.avatar_url}
+                name={displayUser.user_metadata?.full_name || displayUser.email}
                 size="xl"
               />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Welcome back, {user.user_metadata?.full_name?.split(' ')[0] || 'there'}!
+                  Welcome back, {displayUser.user_metadata?.full_name?.split(' ')[0] || 'there'}!
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  {user.email}
+                  {displayUser.email}
                 </p>
               </div>
             </div>
