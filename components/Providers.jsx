@@ -1,181 +1,52 @@
-'use client';
+'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createContext, useContext, useState } from 'react'
 
-// ============================================
-// THEME CONTEXT
-// ============================================
-const ThemeContext = createContext({
-  theme: 'system',
-  setTheme: () => {},
-  resolvedTheme: 'light',
-});
+// Create contexts for global state management
+const AppContext = createContext()
 
-export function useTheme() {
-  return useContext(ThemeContext);
-}
+export function Providers({ children }) {
+  const [favorites, setFavorites] = useState([])
+  const [recentSearches, setRecentSearches] = useState([])
 
-function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('system');
-  const [resolvedTheme, setResolvedTheme] = useState('light');
-  const [mounted, setMounted] = useState(false);
+  const addFavorite = (promptId) => {
+    setFavorites(prev => [...new Set([...prev, promptId])])
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('favorites', JSON.stringify([...favorites, promptId]))
+    }
+  }
 
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem('theme') || 'system';
-    setTheme(stored);
-  }, []);
+  const removeFavorite = (promptId) => {
+    setFavorites(prev => prev.filter(id => id !== promptId))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('favorites', JSON.stringify(favorites.filter(id => id !== promptId)))
+    }
+  }
 
-  useEffect(() => {
-    const root = document.documentElement;
-    
-    const applyTheme = (newTheme) => {
-      if (newTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.toggle('dark', systemTheme === 'dark');
-        setResolvedTheme(systemTheme);
-      } else {
-        root.classList.toggle('dark', newTheme === 'dark');
-        setResolvedTheme(newTheme);
-      }
-    };
+  const addRecentSearch = (query) => {
+    setRecentSearches(prev => [query, ...prev.filter(q => q !== query)].slice(0, 10))
+  }
 
-    applyTheme(theme);
-    localStorage.setItem('theme', theme);
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme('system');
-      }
-    };
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
-
-  if (!mounted) {
-    return null;
+  const value = {
+    favorites,
+    addFavorite,
+    removeFavorite,
+    recentSearches,
+    addRecentSearch
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+    <AppContext.Provider value={value}>
       {children}
-    </ThemeContext.Provider>
-  );
+    </AppContext.Provider>
+  )
 }
 
-// ============================================
-// AUTH CONTEXT
-// ============================================
-const AuthContext = createContext({
-  user: null,
-  session: null,
-  loading: true,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  signInWithOAuth: async () => {},
-});
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClientComponentClient();
-
-  useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
-
-  const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    return data;
-  };
-
-  const signUp = async (email, password, metadata = {}) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
-    if (error) throw error;
-    return data;
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  };
-
-  const signInWithOAuth = async (provider) => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
-    if (error) throw error;
-    return data;
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        signInWithOAuth,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-// ============================================
-// COMBINED PROVIDERS
-// ============================================
-export function Providers({ children }) {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        {children}
-      </AuthProvider>
-    </ThemeProvider>
-  );
+export function useApp() {
+  const context = useContext(AppContext)
+  if (!context) {
+    throw new Error('useApp must be used within Providers')
+  }
+  return context
 }
