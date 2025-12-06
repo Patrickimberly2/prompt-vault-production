@@ -1,0 +1,17 @@
+# 13 Types of Prompts For ChatGPT
+
+There are many types of prompts that you can use with ChatGPT. Here are some examples:
+
+1. Open-ended prompts: These types of prompts allow ChatGPT to generate a wide range of responses. Examples include "Tell me about your experience with [product/service]" or "What are your thoughts on [industry/niche]?"
+2. Multiple choice prompts: These types of prompts provide a set of options for ChatGPT to choose from. Examples include "Which [product/service] do you prefer?" or "Do you prefer [Option A] or [Option B]?"
+3. Fill-in-the-blank prompts: These types of prompts allow you to input specific information into a sentence or question. Examples include "My company offers [product/service] to help customers [achieve goal/benefit]."
+4. Yes/No prompts: These types of prompts require ChatGPT to answer with a simple "Yes" or "No." Examples include "Do you think [industry/niche] is growing in popularity?" or "Have you used [product/service] before?"
+5. Ranking prompts: These types of prompts require ChatGPT to rank a set of items in order of preference or importance. Examples include "Rank these [products/services] from most to least popular" or "Which [product/service] do you think is the most valuable to customers?"
+6. Scenario prompts: These types of prompts require ChatGPT to provide a response based on a specific scenario or situation. Examples include "What would you do if a customer complained about [issue]?" or "How would you handle a situation where [problem] arose?"
+7. Comparative prompts: These types of prompts require ChatGPT to compare or contrast two or more items. Examples include "What are the differences between [product A] and [product B]?" or "Which [marketing strategy] do you think is more effective?"
+8. Prediction prompts: These types of prompts require ChatGPT to make a prediction or forecast about a future event or trend. Examples include "What do you think will be the biggest [trend/issue] in [industry/niche] in the next 5 years?" or "How do you think [product/service] will perform in the market next year?"
+9. Explanation prompts: These types of prompts require ChatGPT to explain a concept or process. Examples include "Can you explain the [technical term] in simple terms?" or "How does [product/service] work?"
+10. Opinion prompts: These types of prompts require ChatGPT to provide an opinion or perspective on a topic. Examples include "What is your opinion on [controversial topic]?" or "Do you think [new trend/technology] will be successful in the market?"
+11. Instructional prompts: These types of prompts require ChatGPT to provide instructions or guidance on a specific task or process. Examples include "How do I [perform a specific task]?" or "What are the steps to [complete a specific process]?"
+12. Feedback prompts: These types of prompts require ChatGPT to provide feedback or suggestions on a product, service, or idea. Examples include "What feedback do you have for my [website/marketing campaign]?" or "Do you have any suggestions for improving [product/service]?"
+13. Empathy prompts: These types of prompts require ChatGPT to show empathy or understanding towards a customer or user. Examples include "I'm having trouble with [problem], can you help me?" or "I feel [emotion], what can I do to feel better?"
