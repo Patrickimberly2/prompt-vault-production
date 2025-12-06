@@ -403,3 +403,4 @@ cd frontend_components
 ```
 
 **Good luck!** 💪 Your PromptVault 2.0 is almost live! 🚀
+
