@@ -22,6 +22,8 @@ import {
   Bot,
   Link2,
   ChevronDown,
+  PenTool,
+  Target,
 } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui/Button';
 import { useTheme } from '@/components/Providers';
@@ -33,6 +35,8 @@ import { useAuth } from '@/components/Providers';
 
 const navigation = [
   { name: 'Prompts', href: '/prompts', icon: Sparkles },
+  { name: 'Fill-in-Blank', href: '/fill-in-the-blank', icon: PenTool },
+  { name: 'Prompt Builder', href: '/prompt-builder', icon: Target },
   { name: 'Bot Builder', href: '/bot-builder', icon: Bot },
   { name: 'Challenges', href: '/challenges', icon: Trophy },
   { name: 'Learn', href: '/learn', icon: BookOpen },
