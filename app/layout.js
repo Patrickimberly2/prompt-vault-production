@@ -74,11 +74,13 @@ export const viewport = {
   ],
 };
 
+export const dynamic = 'force-dynamic' // Force dynamic rendering for all pages
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-white dark:bg-gray-950 antialiased">
-        <Providers>
+<Providers>
           {/* Command Palette (Cmd+K) */}
           <CommandPalette />
           
