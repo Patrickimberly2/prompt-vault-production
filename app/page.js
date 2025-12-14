@@ -2,6 +2,7 @@ import { getFeaturedPrompts, getRecentPrompts, getCategories, getStats } from '@
 import Link from 'next/link'
 
 export const revalidate = 3600 // Revalidate every hour
+export const dynamic = 'force-dynamic' // Ensure dynamic rendering
 
 export default async function HomePage() {
   // Fetch data
