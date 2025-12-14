@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState } from 'react'
+import { ThemeProvider } from 'next-themes'
 
 // Create contexts for global state management
 const AppContext = createContext()
@@ -37,9 +38,11 @@ export function Providers({ children }) {
   }
 
   return (
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
     <AppContext.Provider value={value}>
       {children}
     </AppContext.Provider>
+              </ThemeProvider>
   )
 }
 
@@ -50,3 +53,6 @@ export function useApp() {
   }
   return context
 }
+
+// Re-export useTheme from next-themes
+export { useTheme } from 'next-themes'
