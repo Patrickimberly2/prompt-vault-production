@@ -1,4 +1,46 @@
 pull_request_rules:
+  - name: Label Mergify Stacks PRs
+    description: Pull requests that are part of a Mergify stack should be labeled as such
+    conditions:
+      - "commits[0].commit_message ~= (?m)Change-Id:"
+    actions:
+      label:
+        toggle:
+          - stack
+  - name: Notify when a PR is removed from the queue
+    description: Notify the PR author when its pull request is removed from the merge queue.
+    conditions:
+      - queue-dequeue-reason != none
+      - queue-dequeue-reason != pr-merged
+    actions:
+      comment:
+        message: >
+          Hey @{{author}}, your pull request has been dequeued due to the
+          following reason: {{queue_dequeue_reason}}.
+
+          Sorry about that, but you can requeue the PR by using `@mergifyio
+          requeue` if you think this was a mistake.
+  - name: Request review from team
+    description: Request review from a specific team when checks are green.
+    conditions:
+      - -closed
+      - "#approved-reviews-by = 0"
+      - "#changes-requested-reviews-by = 0"
+      - review-requested != @TEAM_NAME_HERE
+    actions:
+      request_reviews:
+        teams:
+          - TEAM_NAME_HERE
+  - name: Assign t-shirt size to PR
+    description: Assign a t-shirt size label to a pull request based on the number
+      of lines changed.
+    conditions:
+      - "#modified-lines >= 100"
+      - "#modified-lines < 500"
+    actions:
+      label:
+        toggle:
+          - size/L
   - name: Make sure PR are up to date before merging
     description: This automatically updates PRs when they are out-of-date with the
       base branch to avoid semantic conflicts (next step is using a merge
